@@ -4,7 +4,7 @@ import rp "github.com/fiatjaf/relampago"
 
 type VoidWallet struct{}
 
-func New() VoidWallet {
+func Start() VoidWallet {
 	return VoidWallet{}
 }
 
@@ -22,8 +22,9 @@ func (v VoidWallet) CreateInvoice(rp.InvoiceParams) (rp.InvoiceData, error) {
 	}, nil
 }
 
-func (v VoidWallet) GetInvoiceStatus(string) (rp.InvoiceStatus, error) {
+func (v VoidWallet) GetInvoiceStatus(checkingID string) (rp.InvoiceStatus, error) {
 	return rp.InvoiceStatus{
+		CheckingID:       checkingID,
 		Exists:           true,
 		Paid:             false,
 		MSatoshiReceived: 0,
@@ -40,11 +41,12 @@ func (v VoidWallet) MakePayment(rp.PaymentParams) (rp.PaymentData, error) {
 	}, nil
 }
 
-func (v VoidWallet) GetPaymentStatus(string) (rp.PaymentStatus, error) {
+func (v VoidWallet) GetPaymentStatus(checkingID string) (rp.PaymentStatus, error) {
 	return rp.PaymentStatus{
-		Status:   rp.Pending,
-		FeePaid:  0,
-		Preimage: "",
+		CheckingID: checkingID,
+		Status:     rp.Pending,
+		FeePaid:    0,
+		Preimage:   "",
 	}, nil
 }
 
