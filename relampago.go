@@ -47,11 +47,11 @@ type PaymentData struct {
 type Status string
 
 const (
-	Unknown    = "unknown"
-	NeverTried = "neverTried"
-	Pending    = "pending"
-	Failed     = "failed"
-	Complete   = "complete"
+	Unknown    Status = "unknown"
+	NeverTried Status = "neverTried"
+	Pending    Status = "pending"
+	Failed     Status = "failed"
+	Complete   Status = "complete"
 )
 
 type PaymentStatus struct {

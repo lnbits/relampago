@@ -109,6 +109,8 @@ func (s *SparkoWallet) CreateInvoice(params rp.InvoiceParams) (rp.InvoiceData, e
 		args   = make(map[string]interface{})
 	)
 
+	args["msatoshi"] = params.Msatoshi
+
 	if params.DescriptionHash == nil {
 		method = "invoice"
 		args["description"] = params.Description
@@ -173,7 +175,12 @@ func (s *SparkoWallet) MakePayment(params rp.PaymentParams) (rp.PaymentData, err
 	if params.CustomAmount != 0 {
 		args["msatoshi"] = params.CustomAmount
 	}
-	go s.client.CallWithCustomTimeout(time.Second*1, "pay", args)
+	go func() {
+		// I think we need some time here just so the caller can update their DB with
+		// the checkingID we will return
+		time.Sleep(500 * time.Millisecond)
+		s.client.CallWithCustomTimeout(time.Second*1, "pay", args)
+	}()
 
 	return rp.PaymentData{
 		CheckingID: inv.PaymentHash,
