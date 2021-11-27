@@ -110,6 +110,7 @@ func (s *SparkoWallet) CreateInvoice(params rp.InvoiceParams) (rp.InvoiceData, e
 	)
 
 	args["msatoshi"] = params.Msatoshi
+	args["exposeprivatechannels"] = make([]struct{}, 0) // to suppress route hints
 
 	if params.DescriptionHash == nil {
 		method = "invoice"
