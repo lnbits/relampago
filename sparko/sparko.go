@@ -132,6 +132,10 @@ func (s *SparkoWallet) CreateInvoice(params rp.InvoiceParams) (rp.InvoiceData, e
 		args["preimage"] = hex.EncodeToString(preimage)
 	}
 
+	if params.Expiry != nil {
+		args["expiry"] = *params.Expiry / time.Second
+	}
+
 	inv, err := s.client.Call(method, args)
 	if err != nil {
 		return rp.InvoiceData{}, fmt.Errorf("%s call failed: %w", method, err)

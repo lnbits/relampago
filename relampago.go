@@ -1,5 +1,7 @@
 package relampago
 
+import "time"
+
 type Wallet interface {
 	GetInfo() (WalletInfo, error)
 
@@ -17,9 +19,10 @@ type WalletInfo struct {
 }
 
 type InvoiceParams struct {
-	Msatoshi        int64  `json:"msatoshi"`
-	Description     string `json:"description"`
-	DescriptionHash []byte `json:"descriptionHash"`
+	Msatoshi        int64          `json:"msatoshi"`
+	Description     string         `json:"description"`
+	DescriptionHash []byte         `json:"descriptionHash"`
+	Expiry          *time.Duration `json:"expiry"`
 }
 
 type InvoiceData struct {
