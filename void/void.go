@@ -8,6 +8,9 @@ func Start() VoidWallet {
 	return VoidWallet{}
 }
 
+// Compile time check to ensure that VoidWallet fully implements rp.Wallet
+var _ rp.Wallet = (*VoidWallet)(nil)
+
 func (v VoidWallet) GetInfo() (rp.WalletInfo, error) {
 	return rp.WalletInfo{
 		Balance: 0,
