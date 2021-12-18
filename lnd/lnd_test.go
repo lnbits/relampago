@@ -3,13 +3,13 @@ package lnd
 import (
 	"context"
 	"errors"
+	"testing"
+	"time"
+
 	rp "github.com/fiatjaf/relampago"
 	"github.com/lightningnetwork/lnd/lnrpc"
 	"github.com/lightningnetwork/lnd/lnrpc/routerrpc"
 	"google.golang.org/grpc"
-	"reflect"
-	"testing"
-	"time"
 )
 
 //###############//
@@ -156,14 +156,14 @@ func TestGetInvoiceStatus_NotFound(t *testing.T) {
 func TestMakePayment(t *testing.T) {
 	_, router, lnd := setupMocks()
 	router.SendPaymentV2Mock = func(req *routerrpc.SendPaymentRequest) ([]*lnrpc.Payment, error) {
-		return []*lnrpc.Payment{{PaymentIndex: 5}}, nil
+		return []*lnrpc.Payment{}, nil
 	}
 
 	params := rp.PaymentParams{
-		Invoice:      "lnabc",
+		Invoice:      "lnbc175001ps6e5udpp58ur2s8s2ps4dxnhfmu4rpkr6syx6nc7r3q0hsp644nj7tejdxznsdq5w3jhxapqd9h8vmmfvdjscqzpgxqyz5vqsp50cs6gww9y96g84635a7apkwmmmlv69a2sah89qq03ngdgrvdf4ts9qyyssqs9kx2rngh4ty3h5t9hkrx4dxhfrne2jccluw6eq42hutaejvh474wvfg8untkk484v77043aus92mfshmq6psp487r34c5huglpnf0cq24eqg3",
 		CustomAmount: 0,
 	}
-	want := rp.PaymentData{CheckingID: "5"}
+	want := rp.PaymentData{CheckingID: "3f06a81e0a0c2ad34ee9df2a30d87a810da9e3c3881f780755ace5e5e64d30a7"}
 	got, err := lnd.MakePayment(params)
 	if err != nil {
 		t.Errorf("got %v, wanted %v", err, nil)
@@ -178,14 +178,14 @@ func TestMakePayment_CustomAmount(t *testing.T) {
 	var called *routerrpc.SendPaymentRequest
 	router.SendPaymentV2Mock = func(req *routerrpc.SendPaymentRequest) ([]*lnrpc.Payment, error) {
 		called = req
-		return []*lnrpc.Payment{{PaymentIndex: 5}}, nil
+		return []*lnrpc.Payment{{}}, nil
 	}
 
 	params := rp.PaymentParams{
-		Invoice:      "lnabc",
+		Invoice:      "lnbc175001ps6e5udpp58ur2s8s2ps4dxnhfmu4rpkr6syx6nc7r3q0hsp644nj7tejdxznsdq5w3jhxapqd9h8vmmfvdjscqzpgxqyz5vqsp50cs6gww9y96g84635a7apkwmmmlv69a2sah89qq03ngdgrvdf4ts9qyyssqs9kx2rngh4ty3h5t9hkrx4dxhfrne2jccluw6eq42hutaejvh474wvfg8untkk484v77043aus92mfshmq6psp487r34c5huglpnf0cq24eqg3",
 		CustomAmount: 10000,
 	}
-	want := rp.PaymentData{CheckingID: "5"}
+	want := rp.PaymentData{CheckingID: "3f06a81e0a0c2ad34ee9df2a30d87a810da9e3c3881f780755ace5e5e64d30a7"}
 	got, err := lnd.MakePayment(params)
 	if err != nil {
 		t.Errorf("got %v, wanted %v", err, nil)
@@ -205,7 +205,7 @@ func TestMakePayment_SendPaymentError(t *testing.T) {
 	}
 
 	params := rp.PaymentParams{
-		Invoice:      "lnabc",
+		Invoice:      "lnbc175001ps6e5udpp58ur2s8s2ps4dxnhfmu4rpkr6syx6nc7r3q0hsp644nj7tejdxznsdq5w3jhxapqd9h8vmmfvdjscqzpgxqyz5vqsp50cs6gww9y96g84635a7apkwmmmlv69a2sah89qq03ngdgrvdf4ts9qyyssqs9kx2rngh4ty3h5t9hkrx4dxhfrne2jccluw6eq42hutaejvh474wvfg8untkk484v77043aus92mfshmq6psp487r34c5huglpnf0cq24eqg3",
 		CustomAmount: 10000,
 	}
 	_, err := lnd.MakePayment(params)
@@ -215,67 +215,47 @@ func TestMakePayment_SendPaymentError(t *testing.T) {
 }
 
 func TestGetPaymentStatus(t *testing.T) {
-	lightning, _, lnd := setupMocks()
-	var called *lnrpc.ListPaymentsRequest
-	lightning.ListPaymentsMock = func(req *lnrpc.ListPaymentsRequest) (*lnrpc.ListPaymentsResponse, error) {
-		called = req
-		return &lnrpc.ListPaymentsResponse{
-			Payments: []*lnrpc.Payment{{
-				PaymentIndex:    5,
-				Status:          lnrpc.Payment_SUCCEEDED,
-				FeeMsat:         10000,
-				PaymentPreimage: "preimage",
-			}},
-			FirstIndexOffset: 4,
-			LastIndexOffset:  5,
-		}, nil
+	_, router, lnd := setupMocks()
+	router.TrackPaymentV2Mock = func(req *routerrpc.TrackPaymentRequest) ([]*lnrpc.Payment, error) {
+		return []*lnrpc.Payment{{
+			PaymentHash:     "3f06a81e0a0c2ad34ee9df2a30d87a810da9e3c3881f780755ace5e5e64d30a7",
+			Status:          lnrpc.Payment_SUCCEEDED,
+			FeeMsat:         10000,
+			PaymentPreimage: "preimage",
+		}}, nil
 	}
 
 	want := rp.PaymentStatus{
-		CheckingID: "5",
+		CheckingID: "3f06a81e0a0c2ad34ee9df2a30d87a810da9e3c3881f780755ace5e5e64d30a7",
 		Status:     rp.Complete,
 		FeePaid:    10000,
 		Preimage:   "preimage",
 	}
-	got, err := lnd.GetPaymentStatus("5")
+	got, err := lnd.GetPaymentStatus("3f06a81e0a0c2ad34ee9df2a30d87a810da9e3c3881f780755ace5e5e64d30a7")
 	if err != nil {
 		t.Errorf("got %v, wanted %v", err, nil)
 	}
 	if got != want {
 		t.Errorf("got %v, wanted %v", got, want)
 	}
-	wantCalled := &lnrpc.ListPaymentsRequest{
-		IncludeIncomplete: true,
-		IndexOffset:       4,
-		MaxPayments:       1,
-		Reversed:          false,
-	}
-	if reflect.DeepEqual(got, wantCalled) {
-		t.Errorf("got %v, wanted %v", called, wantCalled)
-	}
 }
 
 func TestGetPaymentStatus_Incomplete(t *testing.T) {
-	lightning, _, lnd := setupMocks()
-	lightning.ListPaymentsMock = func(req *lnrpc.ListPaymentsRequest) (*lnrpc.ListPaymentsResponse, error) {
-		return &lnrpc.ListPaymentsResponse{
-			Payments: []*lnrpc.Payment{{
-				PaymentIndex: 5,
-				Status:       lnrpc.Payment_IN_FLIGHT,
-				FeeMsat:      10000,
-			}},
-			FirstIndexOffset: 4,
-			LastIndexOffset:  5,
-		}, nil
+	_, router, lnd := setupMocks()
+	router.TrackPaymentV2Mock = func(req *routerrpc.TrackPaymentRequest) ([]*lnrpc.Payment, error) {
+		return []*lnrpc.Payment{{
+			PaymentHash: "3f06a81e0a0c2ad34ee9df2a30d87a810da9e3c3881f780755ace5e5e64d30a7",
+			Status:      lnrpc.Payment_IN_FLIGHT,
+		}}, nil
 	}
 
 	want := rp.PaymentStatus{
-		CheckingID: "5",
+		CheckingID: "3f06a81e0a0c2ad34ee9df2a30d87a810da9e3c3881f780755ace5e5e64d30a7",
 		Status:     rp.Pending,
 		FeePaid:    0,
 		Preimage:   "",
 	}
-	got, err := lnd.GetPaymentStatus("5")
+	got, err := lnd.GetPaymentStatus("3f06a81e0a0c2ad34ee9df2a30d87a810da9e3c3881f780755ace5e5e64d30a7")
 	if err != nil {
 		t.Errorf("got %v, wanted %v", err, nil)
 	}
@@ -285,13 +265,9 @@ func TestGetPaymentStatus_Incomplete(t *testing.T) {
 }
 
 func TestGetPaymentStatus_NotFound(t *testing.T) {
-	lightning, _, lnd := setupMocks()
-	lightning.ListPaymentsMock = func(req *lnrpc.ListPaymentsRequest) (*lnrpc.ListPaymentsResponse, error) {
-		return &lnrpc.ListPaymentsResponse{
-			Payments:         []*lnrpc.Payment{},
-			FirstIndexOffset: 4,
-			LastIndexOffset:  4,
-		}, nil
+	_, router, lnd := setupMocks()
+	router.TrackPaymentV2Mock = func(req *routerrpc.TrackPaymentRequest) ([]*lnrpc.Payment, error) {
+		return nil, errors.New("lnd will return an error when it can't find the payment or it wasn't initiated")
 	}
 
 	_, err := lnd.GetPaymentStatus("5")
@@ -373,7 +349,8 @@ type MockLightningClient struct {
 type MockRouterClient struct {
 	routerrpc.RouterClient
 
-	SendPaymentV2Mock func(request *routerrpc.SendPaymentRequest) ([]*lnrpc.Payment, error)
+	SendPaymentV2Mock  func(request *routerrpc.SendPaymentRequest) ([]*lnrpc.Payment, error)
+	TrackPaymentV2Mock func(request *routerrpc.TrackPaymentRequest) ([]*lnrpc.Payment, error)
 }
 
 func (m *MockLightningClient) ChannelBalance(
@@ -414,6 +391,20 @@ func (m *MockRouterClient) SendPaymentV2(
 	_ context.Context, req *routerrpc.SendPaymentRequest, _ ...grpc.CallOption) (routerrpc.Router_SendPaymentV2Client, error) {
 	client := PaymentStreamMock{Data: make(chan *lnrpc.Payment)}
 	data, err := m.SendPaymentV2Mock(req)
+	if err != nil {
+		return nil, err
+	}
+	for _, datum := range data {
+		d := datum
+		go func() { client.Data <- d }()
+	}
+	return client, nil
+}
+
+func (m *MockRouterClient) TrackPaymentV2(
+	_ context.Context, req *routerrpc.TrackPaymentRequest, _ ...grpc.CallOption) (routerrpc.Router_TrackPaymentV2Client, error) {
+	client := PaymentStreamMock{Data: make(chan *lnrpc.Payment)}
+	data, err := m.TrackPaymentV2Mock(req)
 	if err != nil {
 		return nil, err
 	}

@@ -5,6 +5,11 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"io"
+	"io/ioutil"
+	"time"
+
+	decodepay "github.com/fiatjaf/ln-decodepay"
 	rp "github.com/fiatjaf/relampago"
 	"github.com/lightningnetwork/lnd/lnrpc"
 	"github.com/lightningnetwork/lnd/lnrpc/routerrpc"
@@ -13,13 +18,9 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	macaroon "gopkg.in/macaroon.v2"
-	"io"
-	"io/ioutil"
-	"strconv"
-	"time"
 )
 
-var PaymentPollInterval = 3 * time.Second
+var PaymentPollInterval = 30 * time.Second
 
 type Params struct {
 	Host              string
@@ -148,51 +149,58 @@ func (l *LndWallet) GetInvoiceStatus(checkingID string) (rp.InvoiceStatus, error
 }
 
 func (l *LndWallet) MakePayment(params rp.PaymentParams) (rp.PaymentData, error) {
+	inv, err := decodepay.Decodepay(params.Invoice)
+	if err != nil {
+		return rp.PaymentData{}, fmt.Errorf("failed to decode invoice '%s': %w", params.Invoice, err)
+	}
+
 	req := &routerrpc.SendPaymentRequest{
 		PaymentRequest: params.Invoice,
 	}
 	if params.CustomAmount != 0 {
 		req.AmtMsat = params.CustomAmount
 	}
-	stream, err := l.Router.SendPaymentV2(context.Background(), req)
+
+	_, err = l.Router.SendPaymentV2(context.Background(), req)
 	if err != nil {
 		return rp.PaymentData{}, fmt.Errorf("error calling SendPaymentV2: %w", err)
 	}
-	res, err := stream.Recv()
-	if err != nil {
-		return rp.PaymentData{}, fmt.Errorf("error getting response from SendPaymentV2: %w", err)
-	}
 
 	return rp.PaymentData{
-		CheckingID: fmt.Sprintf("%d", res.PaymentIndex),
+		CheckingID: inv.PaymentHash,
 	}, nil
 }
 
 func (l *LndWallet) GetPaymentStatus(checkingID string) (rp.PaymentStatus, error) {
-	payIndex, err := strconv.ParseUint(checkingID, 10, 64)
+	paymentHash, err := hex.DecodeString(checkingID)
 	if err != nil {
-		return rp.PaymentStatus{}, fmt.Errorf("error parsing checkingID: %w", err)
-	}
-	req := &lnrpc.ListPaymentsRequest{
-		IncludeIncomplete: true,
-		IndexOffset:       payIndex - 1,
-		MaxPayments:       1,
-		Reversed:          false,
-	}
-	res, err := l.Lightning.ListPayments(context.Background(), req)
-	if err != nil {
-		return rp.PaymentStatus{}, fmt.Errorf("error calling ListPayments: %w", err)
-	}
-	if len(res.Payments) == 0 {
-		return rp.PaymentStatus{}, fmt.Errorf("payment with ID %s not found", checkingID)
+		return rp.PaymentStatus{}, fmt.Errorf("checkingID must be a valid payment hash 32-byte hex, got '%s': %w", checkingID, err)
 	}
 
-	return l.paymentToPaymentStatus(res.Payments[0]), nil
+	stream, err := l.Router.TrackPaymentV2(
+		context.Background(),
+		&routerrpc.TrackPaymentRequest{
+			PaymentHash:       paymentHash,
+			NoInflightUpdates: true,
+		},
+	)
+	if err != nil {
+		return rp.PaymentStatus{}, fmt.Errorf("error calling TrackPaymentV2: %w", err)
+	}
+
+	// the first event will always be the current state of the payment from the db
+	payment, err := stream.Recv()
+	if err != nil {
+		return rp.PaymentStatus{},
+			fmt.Errorf("error calling Recv() on TrackPaymentV2: %w", err)
+	}
+
+	return paymentToPaymentStatus(payment), nil
 }
 
-func (l *LndWallet) paymentToPaymentStatus(payment *lnrpc.Payment) rp.PaymentStatus {
+func paymentToPaymentStatus(payment *lnrpc.Payment) rp.PaymentStatus {
 	status := rp.PaymentStatus{
-		CheckingID: fmt.Sprintf("%d", payment.PaymentIndex),
+		CheckingID: payment.PaymentHash,
 		Status:     rp.Unknown,
 		FeePaid:    0,
 		Preimage:   "",
@@ -284,7 +292,7 @@ func (l *LndWallet) startPaymentsStream() {
 		for _, listener := range l.paymentStatusListeners {
 			for _, payment := range res.Payments {
 				go func(listener chan rp.PaymentStatus, payment *lnrpc.Payment) {
-					listener <- l.paymentToPaymentStatus(payment)
+					listener <- paymentToPaymentStatus(payment)
 				}(listener, payment)
 			}
 		}
