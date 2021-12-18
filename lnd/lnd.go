@@ -3,7 +3,6 @@ package lnd
 import (
 	"context"
 	"encoding/hex"
-	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -80,14 +79,11 @@ func Start(params Params) (*LndWallet, error) {
 		Lightning: ln,
 		Router:    router,
 	}
-	l.StartStreams()
 
-	return l, nil
-}
-
-func (l *LndWallet) StartStreams() {
 	go l.startPaymentsStream()
 	go l.startInvoicesStream()
+
+	return l, nil
 }
 
 // Compile time check to ensure that LndWallet fully implements rp.Wallet
@@ -165,6 +161,9 @@ func (l *LndWallet) MakePayment(params rp.PaymentParams) (rp.PaymentData, error)
 	if err != nil {
 		return rp.PaymentData{}, fmt.Errorf("error calling SendPaymentV2: %w", err)
 	}
+
+	// track this so it can emit payment notifications
+	go l.trackOutgoingPayment(inv.PaymentHash)
 
 	return rp.PaymentData{
 		CheckingID: inv.PaymentHash,
@@ -270,37 +269,7 @@ func (l *LndWallet) startInvoicesStream() {
 }
 
 func (l *LndWallet) startPaymentsStream() {
-	latest, err := l.getLatestPayment()
-	var latestIndex uint64 = 0
-	if err == nil {
-		latestIndex = latest.PaymentIndex
-	}
-
-	// There is no way to subscribe to payment updates, so we must poll
-	for {
-		time.Sleep(PaymentPollInterval)
-		res, err := l.Lightning.ListPayments(context.Background(), &lnrpc.ListPaymentsRequest{
-			IncludeIncomplete: false,
-			IndexOffset:       latestIndex,
-		})
-		if err != nil {
-			log.Errorf("Error getting payments: %v", err)
-		}
-		if len(res.Payments) == 0 {
-			continue
-		}
-		for _, listener := range l.paymentStatusListeners {
-			for _, payment := range res.Payments {
-				go func(listener chan rp.PaymentStatus, payment *lnrpc.Payment) {
-					listener <- paymentToPaymentStatus(payment)
-				}(listener, payment)
-			}
-		}
-		latestIndex = res.LastIndexOffset
-	}
-}
-
-func (l *LndWallet) getLatestPayment() (*lnrpc.Payment, error) {
+	// get latest settled payment index
 	res, err := l.Lightning.ListPayments(context.Background(), &lnrpc.ListPaymentsRequest{
 		IncludeIncomplete: false,
 		IndexOffset:       0,
@@ -308,10 +277,77 @@ func (l *LndWallet) getLatestPayment() (*lnrpc.Payment, error) {
 		Reversed:          true,
 	})
 	if err != nil {
-		return nil, err
+		panic(fmt.Errorf("error getting latest paid index: %w", err))
 	}
 	if len(res.Payments) == 0 {
-		return nil, errors.New("no payments found")
+		return
 	}
-	return res.Payments[0], nil
+	lastPaidIndex := res.Payments[0].PaymentIndex
+
+	// get all pending payments
+	res, err = l.Lightning.ListPayments(context.Background(), &lnrpc.ListPaymentsRequest{
+		IncludeIncomplete: true,
+		IndexOffset:       lastPaidIndex,
+		Reversed:          false,
+	})
+	if err != nil {
+		panic(fmt.Errorf("error listing pending payments: %w", err))
+	}
+
+	// track all these pending payments
+	for _, payment := range res.Payments {
+		go l.trackOutgoingPayment(payment.PaymentHash)
+	}
+}
+
+func (l *LndWallet) trackOutgoingPayment(hash string) {
+	paymentHash, err := hex.DecodeString(hash)
+	if err != nil {
+		panic(fmt.Errorf("failed to decode hex on trackOutgoingPayment(%s): %w",
+			hash, err))
+	}
+
+	stream, err := l.Router.TrackPaymentV2(
+		context.Background(),
+		&routerrpc.TrackPaymentRequest{
+			PaymentHash:       paymentHash,
+			NoInflightUpdates: true,
+		},
+	)
+	if err != nil {
+		panic(fmt.Errorf(
+			"call to TrackPaymentV2 failed on trackOutgoingPayment(%s): %w", hash, err))
+	}
+
+	status := rp.PaymentStatus{
+		Status:     rp.Unknown,
+		CheckingID: hash,
+	}
+	for {
+		payment, err := stream.Recv()
+		if err != nil {
+			panic(fmt.Errorf("failed to stream.Recv() on trackOutgoingPayment(%s): %w",
+				hash, err))
+		}
+
+		switch payment.Status {
+		case lnrpc.Payment_UNKNOWN:
+			// was never attempted (but maybe it will still be in the next seconds?)
+			return
+		case lnrpc.Payment_SUCCEEDED:
+			status.Status = rp.Complete
+			status.FeePaid = payment.FeeMsat
+			status.Preimage = payment.PaymentPreimage
+		case lnrpc.Payment_FAILED:
+			status.Status = rp.Failed
+		default:
+			// all other cases are ignored
+			return
+		}
+	}
+
+	// at this point we know this payment either failed or succeeded
+	for _, listener := range l.paymentStatusListeners {
+		listener <- status
+	}
 }

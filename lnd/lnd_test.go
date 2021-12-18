@@ -158,6 +158,9 @@ func TestMakePayment(t *testing.T) {
 	router.SendPaymentV2Mock = func(req *routerrpc.SendPaymentRequest) ([]*lnrpc.Payment, error) {
 		return []*lnrpc.Payment{}, nil
 	}
+	router.TrackPaymentV2Mock = func(req *routerrpc.TrackPaymentRequest) ([]*lnrpc.Payment, error) {
+		return []*lnrpc.Payment{}, nil
+	}
 
 	params := rp.PaymentParams{
 		Invoice:      "lnbc175001ps6e5udpp58ur2s8s2ps4dxnhfmu4rpkr6syx6nc7r3q0hsp644nj7tejdxznsdq5w3jhxapqd9h8vmmfvdjscqzpgxqyz5vqsp50cs6gww9y96g84635a7apkwmmmlv69a2sah89qq03ngdgrvdf4ts9qyyssqs9kx2rngh4ty3h5t9hkrx4dxhfrne2jccluw6eq42hutaejvh474wvfg8untkk484v77043aus92mfshmq6psp487r34c5huglpnf0cq24eqg3",
@@ -179,6 +182,9 @@ func TestMakePayment_CustomAmount(t *testing.T) {
 	router.SendPaymentV2Mock = func(req *routerrpc.SendPaymentRequest) ([]*lnrpc.Payment, error) {
 		called = req
 		return []*lnrpc.Payment{{}}, nil
+	}
+	router.TrackPaymentV2Mock = func(req *routerrpc.TrackPaymentRequest) ([]*lnrpc.Payment, error) {
+		return []*lnrpc.Payment{}, nil
 	}
 
 	params := rp.PaymentParams{
@@ -202,6 +208,9 @@ func TestMakePayment_SendPaymentError(t *testing.T) {
 	_, router, lnd := setupMocks()
 	router.SendPaymentV2Mock = func(req *routerrpc.SendPaymentRequest) ([]*lnrpc.Payment, error) {
 		return nil, errors.New("error")
+	}
+	router.TrackPaymentV2Mock = func(req *routerrpc.TrackPaymentRequest) ([]*lnrpc.Payment, error) {
+		return []*lnrpc.Payment{}, nil
 	}
 
 	params := rp.PaymentParams{
@@ -303,7 +312,9 @@ func TestPaidInvoicesStream(t *testing.T) {
 		Paid:             true,
 		MSatoshiReceived: 1000,
 	}
-	lnd.StartStreams()
+
+	go lnd.startInvoicesStream()
+
 	stream, err := lnd.PaidInvoicesStream()
 	if err != nil {
 		t.Errorf("got %v, wanted %v", err, nil)
