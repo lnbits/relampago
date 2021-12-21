@@ -1,4 +1,4 @@
-module github.com/fiatjaf/relampago
+module github.com/lnbits/relampago
 
 go 1.16
 
