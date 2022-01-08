@@ -9,10 +9,10 @@ import (
 	"time"
 
 	decodepay "github.com/fiatjaf/ln-decodepay"
-	rp "github.com/lnbits/relampago"
 	"github.com/lightningnetwork/lnd/lnrpc"
 	"github.com/lightningnetwork/lnd/lnrpc/routerrpc"
 	"github.com/lightningnetwork/lnd/macaroons"
+	rp "github.com/lnbits/relampago"
 	"github.com/prometheus/common/log"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -22,9 +22,9 @@ import (
 var PaymentPollInterval = 30 * time.Second
 
 type Params struct {
-	Host              string
-	CertPath          string
-	AdminMacaroonPath string
+	Host         string
+	CertPath     string
+	MacaroonPath string
 }
 
 type LndWallet struct {
@@ -49,7 +49,7 @@ func Start(params Params) (*LndWallet, error) {
 	dialOpts = append(dialOpts, grpc.WithTransportCredentials(tls))
 
 	// Macaroon Auth
-	macBytes, err := ioutil.ReadFile(params.AdminMacaroonPath)
+	macBytes, err := ioutil.ReadFile(params.MacaroonPath)
 	if err != nil {
 		return nil, err
 	}

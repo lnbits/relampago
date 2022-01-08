@@ -33,7 +33,7 @@ type SparkoWallet struct {
 // Compile time check to ensure that SparkoWallet fully implements rp.Wallet
 var _ rp.Wallet = (*SparkoWallet)(nil)
 
-func Start(params Params) *SparkoWallet {
+func Start(params Params) (*SparkoWallet, error) {
 	if !strings.HasPrefix(params.Host, "http") {
 		params.Host = "http://" + params.Host
 	}
@@ -89,7 +89,7 @@ func Start(params Params) *SparkoWallet {
 		}
 	})
 
-	return s
+	return s, nil
 }
 
 func (s *SparkoWallet) GetInfo() (rp.WalletInfo, error) {

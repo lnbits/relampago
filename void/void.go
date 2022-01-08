@@ -4,8 +4,8 @@ import rp "github.com/lnbits/relampago"
 
 type VoidWallet struct{}
 
-func Start() VoidWallet {
-	return VoidWallet{}
+func Start() (VoidWallet, error) {
+	return VoidWallet{}, nil
 }
 
 // Compile time check to ensure that VoidWallet fully implements rp.Wallet
