@@ -51,7 +51,7 @@ type Status string
 
 const (
 	Unknown    Status = "unknown"
-	NeverTried Status = "neverTried"
+	NeverTried Status = "never-tried"
 	Pending    Status = "pending"
 	Failed     Status = "failed"
 	Complete   Status = "complete"
