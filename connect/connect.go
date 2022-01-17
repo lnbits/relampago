@@ -1,6 +1,9 @@
 package relampago_connect
 
 import (
+	"fmt"
+
+	"github.com/kelseyhightower/envconfig"
 	"github.com/lnbits/relampago"
 	"github.com/lnbits/relampago/lnd"
 	"github.com/lnbits/relampago/sparko"
@@ -20,6 +23,10 @@ type LightningBackendSettings struct {
 
 func Connect() (relampago.Wallet, error) {
 	var lbs LightningBackendSettings
+	err := envconfig.Process("", &lbs)
+	if err != nil {
+		return nil, fmt.Errorf("failed to process envconfig: %w", err)
+	}
 
 	// start lightning backend
 	switch lbs.BackendType {

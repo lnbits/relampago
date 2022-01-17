@@ -9,6 +9,7 @@ require (
 	github.com/fiatjaf/lightningd-gjson-rpc v1.4.1
 	github.com/fiatjaf/ln-decodepay v1.1.0
 	github.com/json-iterator/go v1.1.12 // indirect
+	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/kr/pretty v0.2.0 // indirect
 	github.com/lightningnetwork/lnd v0.14.1-beta
 	github.com/prometheus/common v0.26.0
