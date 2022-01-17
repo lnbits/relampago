@@ -41,9 +41,8 @@ func Connect() (relampago.Wallet, error) {
 	case "clightning":
 	case "sparko":
 		return sparko.Start(sparko.Params{
-			Host:               lbs.SparkoURL,
-			Key:                lbs.SparkoToken,
-			InvoiceLabelPrefix: "lbs",
+			Host: lbs.SparkoURL,
+			Key:  lbs.SparkoToken,
 		})
 	case "lnbits":
 	case "lnpay":
