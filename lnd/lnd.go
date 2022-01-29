@@ -323,6 +323,8 @@ func (l *LndWallet) trackOutgoingPayment(hash string) {
 		Status:     rp.Unknown,
 		CheckingID: hash,
 	}
+
+checkPaymentStatus:
 	for {
 		payment, err := stream.Recv()
 		if err != nil {
@@ -338,8 +340,10 @@ func (l *LndWallet) trackOutgoingPayment(hash string) {
 			status.Status = rp.Complete
 			status.FeePaid = payment.FeeMsat
 			status.Preimage = payment.PaymentPreimage
+			break checkPaymentStatus
 		case lnrpc.Payment_FAILED:
 			status.Status = rp.Failed
+			break checkPaymentStatus
 		default:
 			// all other cases are ignored
 			return
