@@ -10,6 +10,7 @@ type Wallet interface {
 	PaidInvoicesStream() (<-chan InvoiceStatus, error)
 
 	MakePayment(PaymentParams) (PaymentData, error)
+	Keysend(KeysendParams) (PaymentData, error)
 	GetPaymentStatus(string) (PaymentStatus, error)
 	PaymentsStream() (<-chan PaymentStatus, error)
 }
@@ -41,6 +42,14 @@ type InvoiceStatus struct {
 type PaymentParams struct {
 	Invoice      string `json:"invoice"`
 	CustomAmount int64  `json:"customAmount"`
+}
+
+type KeysendParams struct {
+	Dest              string            `json:"dest"`
+	PaymentHash       string            `json:"paymentHash"`
+	Preimage          string            `json:"preimage"`
+	Amount            int64             `json:"amount"`
+	DestCustomRecords map[uint64][]byte `json:"destCustomRecords"`
 }
 
 type PaymentData struct {

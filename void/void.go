@@ -44,6 +44,12 @@ func (v VoidWallet) MakePayment(rp.PaymentParams) (rp.PaymentData, error) {
 	}, nil
 }
 
+func (v VoidWallet) Keysend(rp.KeysendParams) (rp.PaymentData, error) {
+	return rp.PaymentData{
+		CheckingID: "void",
+	}, nil
+}
+
 func (v VoidWallet) GetPaymentStatus(checkingID string) (rp.PaymentStatus, error) {
 	return rp.PaymentStatus{
 		CheckingID: checkingID,

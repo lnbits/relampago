@@ -195,6 +195,10 @@ func (s *SparkoWallet) MakePayment(params rp.PaymentParams) (rp.PaymentData, err
 	}, nil
 }
 
+func (s *SparkoWallet) Keysend(params rp.KeysendParams) (rp.PaymentData, error) {
+	return rp.PaymentData{}, fmt.Errorf("not implemented")
+}
+
 func (s *SparkoWallet) GetPaymentStatus(checkingID string) (rp.PaymentStatus, error) {
 	res, err := s.client.Call("listpays", map[string]interface{}{
 		"payment_hash": checkingID,
