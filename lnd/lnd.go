@@ -100,12 +100,15 @@ func (l *LndWallet) GetInfo() (rp.WalletInfo, error) {
 }
 
 func (l *LndWallet) CreateInvoice(params rp.InvoiceParams) (rp.InvoiceData, error) {
-	invoice, err := l.Lightning.AddInvoice(context.Background(), &lnrpc.Invoice{
+	inv := &lnrpc.Invoice{
 		Memo:            params.Description,
 		DescriptionHash: params.DescriptionHash,
 		ValueMsat:       params.Msatoshi,
-		Expiry:          int64(params.Expiry.Seconds()),
-	})
+	}
+	if params.Expiry != nil {
+		inv.Expiry = int64(params.Expiry.Seconds())
+	}
+	invoice, err := l.Lightning.AddInvoice(context.Background(), inv)
 	if err != nil {
 		return rp.InvoiceData{}, fmt.Errorf("error calling AddInvoice: %w", err)
 	}
