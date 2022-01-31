@@ -96,8 +96,15 @@ func (l *LndWallet) GetInfo() (rp.WalletInfo, error) {
 	if err != nil {
 		return rp.WalletInfo{}, fmt.Errorf("error calling ChannelBalance: %w", err)
 	}
+
+	info, err := l.Lightning.GetInfo(context.Background(), &lnrpc.GetInfoRequest{})
+	if err != nil {
+		return rp.WalletInfo{}, fmt.Errorf("error calling GetInfo: %w", err)
+	}
+
 	return rp.WalletInfo{
 		Balance: int64(res.LocalBalance.Sat),
+		Pubkey:  info.IdentityPubkey,
 	}, nil
 }
 
@@ -310,11 +317,28 @@ func (l *LndWallet) startInvoicesStream() {
 		}
 		for _, listener := range l.invoiceStatusListeners {
 			go func(listener chan rp.InvoiceStatus) {
-				listener <- rp.InvoiceStatus{
-					CheckingID:       hex.EncodeToString(res.RHash),
-					Exists:           true,
-					Paid:             res.State == lnrpc.Invoice_SETTLED,
-					MSatoshiReceived: res.AmtPaidMsat,
+				if res.IsKeysend {
+					// An HTLC entry must be present with custom records.
+					if len(res.Htlcs) == 0 {
+						return
+					}
+
+					listener <- rp.InvoiceStatus{
+						CheckingID:       hex.EncodeToString(res.RHash),
+						Preimage:         hex.EncodeToString(res.RPreimage),
+						Exists:           true,
+						Paid:             res.State == lnrpc.Invoice_SETTLED,
+						MSatoshiReceived: res.AmtPaidMsat,
+						IsKeySend:        res.IsKeysend,
+						CustomRecords:    res.Htlcs[0].CustomRecords,
+					}
+				} else {
+					listener <- rp.InvoiceStatus{
+						CheckingID:       hex.EncodeToString(res.RHash),
+						Exists:           true,
+						Paid:             res.State == lnrpc.Invoice_SETTLED,
+						MSatoshiReceived: res.AmtPaidMsat,
+					}
 				}
 			}(listener)
 		}

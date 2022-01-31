@@ -16,7 +16,8 @@ type Wallet interface {
 }
 
 type WalletInfo struct {
-	Balance int64 `json:"balance"`
+	Balance int64  `json:"balance"`
+	Pubkey  string `json:"pubkey"`
 }
 
 type InvoiceParams struct {
@@ -33,10 +34,13 @@ type InvoiceData struct {
 }
 
 type InvoiceStatus struct {
-	CheckingID       string `json:"checkingID"`
-	Exists           bool   `json:"exists"`
-	Paid             bool   `json:"paid"`
-	MSatoshiReceived int64  `json:"msatoshiReceived"`
+	CheckingID       string            `json:"checkingID"`
+	Preimage         string            `json:"preimage"`
+	Exists           bool              `json:"exists"`
+	Paid             bool              `json:"paid"`
+	MSatoshiReceived int64             `json:"msatoshiReceived"`
+	IsKeySend        bool              `json:"isKeySend"`
+	CustomRecords    map[uint64][]byte `json:"customRecords"`
 }
 
 type PaymentParams struct {
