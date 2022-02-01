@@ -335,6 +335,7 @@ checkPaymentStatus:
 		if err != nil {
 			panic(fmt.Errorf("failed to stream.Recv() on trackOutgoingPayment(%s): %w",
 				hash, err))
+			return
 		}
 
 		switch payment.Status {
