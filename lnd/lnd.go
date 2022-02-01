@@ -22,9 +22,10 @@ import (
 var PaymentPollInterval = 30 * time.Second
 
 type Params struct {
-	Host         string
-	CertPath     string
-	MacaroonPath string
+	Host           string
+	CertPath       string
+	MacaroonPath   string
+	ConnectTimeout time.Duration
 }
 
 type LndWallet struct {
@@ -64,6 +65,7 @@ func Start(params Params) (*LndWallet, error) {
 	}
 	dialOpts = append(dialOpts, grpc.WithPerRPCCredentials(creds))
 	dialOpts = append(dialOpts, grpc.WithBlock())
+	dialOpts = append(dialOpts, grpc.WithTimeout(params.ConnectTimeout))
 
 	// Connect
 	conn, err := grpc.Dial(params.Host, dialOpts...)

@@ -16,8 +16,9 @@ import (
 )
 
 type Params struct {
-	Host string
-	Key  string
+	Host           string
+	Key            string
+	ConnectTimeout time.Duration
 
 	InvoiceLabelPrefix string // optional, defaults to 'relampago'
 }
@@ -44,7 +45,7 @@ func Start(params Params) (*SparkoWallet, error) {
 	spark := &lightning.Client{
 		SparkURL:    params.Host + "/rpc",
 		SparkToken:  params.Key,
-		CallTimeout: time.Second * 15,
+		CallTimeout: params.ConnectTimeout,
 	}
 
 	s := &SparkoWallet{
