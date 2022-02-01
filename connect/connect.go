@@ -14,7 +14,7 @@ import (
 
 type LightningBackendSettings struct {
 	BackendType    string `envconfig:"LIGHTNING_BACKEND_TYPE"`
-	ConnectTimeout string `envconfig:"CONNECT_TIMEOUT" default:"15"`
+	ConnectTimeout string `envconfig:"LIGHTNING_CONNECT_TIMEOUT" default:"15"`
 
 	SparkoURL   string `envconfig:"SPARKO_URL"`
 	SparkoToken string `envconfig:"SPARKO_TOKEN"`
