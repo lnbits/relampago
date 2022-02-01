@@ -2,6 +2,8 @@ package relampago_connect
 
 import (
 	"fmt"
+	"strconv"
+	"time"
 
 	"github.com/kelseyhightower/envconfig"
 	"github.com/lnbits/relampago"
@@ -11,7 +13,8 @@ import (
 )
 
 type LightningBackendSettings struct {
-	BackendType string `envconfig:"LIGHTNING_BACKEND_TYPE"`
+	BackendType    string `envconfig:"LIGHTNING_BACKEND_TYPE"`
+	ConnectTimeout string `envconfig:"CONNECT_TIMEOUT" default:"15"`
 
 	SparkoURL   string `envconfig:"SPARKO_URL"`
 	SparkoToken string `envconfig:"SPARKO_TOKEN"`
@@ -28,21 +31,28 @@ func Connect() (relampago.Wallet, error) {
 		return nil, fmt.Errorf("failed to process envconfig: %w", err)
 	}
 
+	connectTimeout, err := strconv.Atoi(lbs.ConnectTimeout)
+	if err != nil {
+		return nil, err
+	}
+
 	// start lightning backend
 	switch lbs.BackendType {
 	case "lndrest":
 	case "lndgrpc":
 		return lnd.Start(lnd.Params{
-			Host:         lbs.LNDHost,
-			CertPath:     lbs.LNDCertPath,
-			MacaroonPath: lbs.LNDMacaroonPath,
+			Host:           lbs.LNDHost,
+			CertPath:       lbs.LNDCertPath,
+			MacaroonPath:   lbs.LNDMacaroonPath,
+			ConnectTimeout: time.Duration(connectTimeout) * time.Second,
 		})
 	case "eclair":
 	case "clightning":
 	case "sparko":
 		return sparko.Start(sparko.Params{
-			Host: lbs.SparkoURL,
-			Key:  lbs.SparkoToken,
+			Host:           lbs.SparkoURL,
+			Key:            lbs.SparkoToken,
+			ConnectTimeout: time.Duration(connectTimeout) * time.Second,
 		})
 	case "lnbits":
 	case "lnpay":
