@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
 	"time"
 
 	decodepay "github.com/fiatjaf/ln-decodepay"
@@ -13,7 +14,6 @@ import (
 	"github.com/lightningnetwork/lnd/lnrpc/routerrpc"
 	"github.com/lightningnetwork/lnd/macaroons"
 	rp "github.com/lnbits/relampago"
-	"github.com/prometheus/common/log"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	macaroon "gopkg.in/macaroon.v2"
@@ -91,11 +91,17 @@ func Start(params Params) (*LndWallet, error) {
 // Compile time check to ensure that LndWallet fully implements rp.Wallet
 var _ rp.Wallet = (*LndWallet)(nil)
 
+func (l *LndWallet) Kind() string {
+	return "lndgrpc"
+}
+
 func (l *LndWallet) GetInfo() (rp.WalletInfo, error) {
-	res, err := l.Lightning.ChannelBalance(context.Background(), &lnrpc.ChannelBalanceRequest{})
+	res, err := l.Lightning.ChannelBalance(
+		context.Background(), &lnrpc.ChannelBalanceRequest{})
 	if err != nil {
 		return rp.WalletInfo{}, fmt.Errorf("error calling ChannelBalance: %w", err)
 	}
+
 	return rp.WalletInfo{
 		Balance: int64(res.LocalBalance.Sat),
 	}, nil
@@ -254,7 +260,7 @@ func (l *LndWallet) startInvoicesStream() {
 			break
 		}
 		if err != nil {
-			log.Errorf("Error receiving invoice event: %v", err)
+			log.Printf("Error receiving invoice event: %v", err)
 		}
 
 		if res.State != lnrpc.Invoice_SETTLED {

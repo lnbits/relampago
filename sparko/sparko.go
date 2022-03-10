@@ -31,9 +31,6 @@ type SparkoWallet struct {
 	paymentStatusListeners []chan rp.PaymentStatus
 }
 
-// Compile time check to ensure that SparkoWallet fully implements rp.Wallet
-var _ rp.Wallet = (*SparkoWallet)(nil)
-
 func Start(params Params) (*SparkoWallet, error) {
 	if !strings.HasPrefix(params.Host, "http") {
 		params.Host = "http://" + params.Host
@@ -91,6 +88,13 @@ func Start(params Params) (*SparkoWallet, error) {
 	})
 
 	return s, nil
+}
+
+// Compile time check to ensure that SparkoWallet fully implements rp.Wallet
+var _ rp.Wallet = (*SparkoWallet)(nil)
+
+func (s *SparkoWallet) Kind() string {
+	return "sparko"
 }
 
 func (s *SparkoWallet) GetInfo() (rp.WalletInfo, error) {

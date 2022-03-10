@@ -11,6 +11,10 @@ func Start() (VoidWallet, error) {
 // Compile time check to ensure that VoidWallet fully implements rp.Wallet
 var _ rp.Wallet = (*VoidWallet)(nil)
 
+func (v VoidWallet) Kind() string {
+	return "void"
+}
+
 func (v VoidWallet) GetInfo() (rp.WalletInfo, error) {
 	return rp.WalletInfo{
 		Balance: 0,

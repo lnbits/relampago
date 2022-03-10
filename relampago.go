@@ -3,6 +3,7 @@ package relampago
 import "time"
 
 type Wallet interface {
+	Kind() string
 	GetInfo() (WalletInfo, error)
 
 	CreateInvoice(InvoiceParams) (InvoiceData, error)
