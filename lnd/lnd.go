@@ -2,6 +2,7 @@ package lnd
 
 import (
 	"context"
+	"crypto/rand"
 	"encoding/hex"
 	"fmt"
 	"io"
@@ -119,28 +120,27 @@ func (l *LndWallet) CreateInvoice(params rp.InvoiceParams) (rp.InvoiceData, erro
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	inv := &lnrpc.Invoice{
+	preimage := make([]byte, 32)
+	rand.Read(preimage)
+
+	args := &lnrpc.Invoice{
 		Memo:            params.Description,
 		DescriptionHash: params.DescriptionHash,
 		ValueMsat:       params.Msatoshi,
+		RPreimage:       preimage,
 	}
 	if params.Expiry != nil {
-		inv.Expiry = int64(params.Expiry.Seconds())
+		args.Expiry = int64(params.Expiry.Seconds())
 	}
-	invoice, err := l.Lightning.AddInvoice(context.Background(), inv)
+	inv, err := l.Lightning.AddInvoice(ctx, args)
 	if err != nil {
 		return rp.InvoiceData{}, fmt.Errorf("error calling AddInvoice: %w", err)
 	}
 
-	// LookupInvoice to get the preimage since AddInvoice only returns the hash
-	res, err := l.Lightning.LookupInvoice(context.Background(), &lnrpc.PaymentHash{RHash: invoice.RHash})
-	if err != nil {
-		return rp.InvoiceData{}, fmt.Errorf("error calling LookupInvoice: %w", err)
-	}
 	return rp.InvoiceData{
-		CheckingID: hex.EncodeToString(res.RHash),
-		Preimage:   hex.EncodeToString(res.RPreimage),
-		Invoice:    res.PaymentRequest,
+		CheckingID: hex.EncodeToString(inv.RHash),
+		Preimage:   hex.EncodeToString(preimage),
+		Invoice:    inv.PaymentRequest,
 	}, nil
 }
 
