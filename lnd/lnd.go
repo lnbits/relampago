@@ -102,8 +102,10 @@ func (l *LndWallet) Kind() string {
 }
 
 func (l *LndWallet) GetInfo() (rp.WalletInfo, error) {
-	res, err := l.Lightning.ChannelBalance(
-		context.Background(), &lnrpc.ChannelBalanceRequest{})
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	res, err := l.Lightning.ChannelBalance(ctx, &lnrpc.ChannelBalanceRequest{})
 	if err != nil {
 		return rp.WalletInfo{}, fmt.Errorf("error calling ChannelBalance: %w", err)
 	}
@@ -114,6 +116,9 @@ func (l *LndWallet) GetInfo() (rp.WalletInfo, error) {
 }
 
 func (l *LndWallet) CreateInvoice(params rp.InvoiceParams) (rp.InvoiceData, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
 	inv := &lnrpc.Invoice{
 		Memo:            params.Description,
 		DescriptionHash: params.DescriptionHash,
@@ -140,11 +145,14 @@ func (l *LndWallet) CreateInvoice(params rp.InvoiceParams) (rp.InvoiceData, erro
 }
 
 func (l *LndWallet) GetInvoiceStatus(checkingID string) (rp.InvoiceStatus, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
 	rHash, err := hex.DecodeString(checkingID)
 	if err != nil {
 		return rp.InvoiceStatus{}, fmt.Errorf("invalid checkingID: %w", err)
 	}
-	res, err := l.Lightning.LookupInvoice(context.Background(), &lnrpc.PaymentHash{RHash: rHash})
+	res, err := l.Lightning.LookupInvoice(ctx, &lnrpc.PaymentHash{RHash: rHash})
 	if err != nil || res == nil {
 		return rp.InvoiceStatus{
 			CheckingID:       checkingID,
@@ -162,6 +170,9 @@ func (l *LndWallet) GetInvoiceStatus(checkingID string) (rp.InvoiceStatus, error
 }
 
 func (l *LndWallet) MakePayment(params rp.PaymentParams) (rp.PaymentData, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
 	inv, err := decodepay.Decodepay(params.Invoice)
 	if err != nil {
 		return rp.PaymentData{}, fmt.Errorf("failed to decode invoice '%s': %w", params.Invoice, err)
@@ -188,13 +199,16 @@ func (l *LndWallet) MakePayment(params rp.PaymentParams) (rp.PaymentData, error)
 }
 
 func (l *LndWallet) GetPaymentStatus(checkingID string) (rp.PaymentStatus, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
 	paymentHash, err := hex.DecodeString(checkingID)
 	if err != nil {
 		return rp.PaymentStatus{}, fmt.Errorf("checkingID must be a valid payment hash 32-byte hex, got '%s': %w", checkingID, err)
 	}
 
 	stream, err := l.Router.TrackPaymentV2(
-		context.Background(),
+		ctx,
 		&routerrpc.TrackPaymentRequest{
 			PaymentHash:       paymentHash,
 			NoInflightUpdates: true,
@@ -286,8 +300,11 @@ func (l *LndWallet) startInvoicesStream() {
 }
 
 func (l *LndWallet) startPaymentsStream() {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
 	// get latest settled payment index
-	res, err := l.Lightning.ListPayments(context.Background(), &lnrpc.ListPaymentsRequest{
+	res, err := l.Lightning.ListPayments(ctx, &lnrpc.ListPaymentsRequest{
 		IncludeIncomplete: false,
 		IndexOffset:       0,
 		MaxPayments:       1,
@@ -302,7 +319,7 @@ func (l *LndWallet) startPaymentsStream() {
 	lastPaidIndex := res.Payments[0].PaymentIndex
 
 	// get all pending payments
-	res, err = l.Lightning.ListPayments(context.Background(), &lnrpc.ListPaymentsRequest{
+	res, err = l.Lightning.ListPayments(ctx, &lnrpc.ListPaymentsRequest{
 		IncludeIncomplete: true,
 		IndexOffset:       lastPaidIndex,
 		Reversed:          false,
