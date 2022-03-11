@@ -7,6 +7,7 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
+	"strings"
 	"time"
 
 	decodepay "github.com/fiatjaf/ln-decodepay"
@@ -41,6 +42,11 @@ type LndWallet struct {
 
 func Start(params Params) (*LndWallet, error) {
 	var dialOpts []grpc.DialOption
+
+	// checks
+	if strings.HasPrefix(params.Host, "http") {
+		return nil, fmt.Errorf("lnd grpc host cannot have an http prefix.")
+	}
 
 	// TLS
 	tls, err := credentials.NewClientTLSFromFile(params.CertPath, "")
