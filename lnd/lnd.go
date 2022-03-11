@@ -180,19 +180,32 @@ func (l *LndWallet) MakePayment(params rp.PaymentParams) (rp.PaymentData, error)
 
 	req := &routerrpc.SendPaymentRequest{
 		PaymentRequest: params.Invoice,
+		TimeoutSeconds: 30,
+		FeeLimitMsat:   int64(float64(inv.MSatoshi) * 0.01),
 	}
 	if params.CustomAmount != 0 {
 		req.AmtMsat = params.CustomAmount
+		req.FeeLimitMsat = int64(float64(params.CustomAmount) * 0.01)
+	}
+	if req.FeeLimitMsat < 2000 {
+		req.FeeLimitMsat = 2000
 	}
 
-	_, err = l.Router.SendPaymentV2(context.Background(), req)
+	stream, err := l.Router.SendPaymentV2(ctx, req)
 	if err != nil {
 		return rp.PaymentData{}, fmt.Errorf("error calling SendPaymentV2: %w", err)
+	}
+
+	// listen to the first notification, which should be "in_flight"
+	if _, err := stream.Recv(); err != nil {
+		return rp.PaymentData{}, fmt.Errorf("failed to stream.Recv() on MakePayment(%s): %w",
+			inv.PaymentHash, err)
 	}
 
 	// track this so it can emit payment notifications
 	go l.trackOutgoingPayment(inv.PaymentHash)
 
+	// return the checking id
 	return rp.PaymentData{
 		CheckingID: inv.PaymentHash,
 	}, nil
