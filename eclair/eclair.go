@@ -4,7 +4,6 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
-	"log"
 	"strings"
 	"time"
 
@@ -20,7 +19,9 @@ type Params struct {
 type EclairWallet struct {
 	Params
 
-	client *eclair.Client
+	client                 *eclair.Client
+	invoiceStatusListeners []chan rp.InvoiceStatus
+	paymentStatusListeners []chan rp.PaymentStatus
 }
 
 func Start(params Params) (*EclairWallet, error) {
@@ -40,13 +41,37 @@ func Start(params Params) (*EclairWallet, error) {
 		panic(err)
 	} else {
 		go func() {
-			for message := range ws {
-				typ := message.Get("type").String()
-				if typ == "channel-state-changed" {
-					continue
-				}
+			for event := range ws {
+				switch event.Get("type").String() {
+				case "payment-received":
+					var msats int64
+					for _, part := range event.Get("parts").Array() {
+						msats += part.Get("amount").Int()
+					}
 
-				log.Printf("[%s] %s", typ, message.String())
+					for _, listener := range e.invoiceStatusListeners {
+						listener <- rp.InvoiceStatus{
+							CheckingID:       event.Get("paymentHash").String(),
+							Exists:           true,
+							Paid:             true,
+							MSatoshiReceived: msats,
+						}
+					}
+				case "payment-sent":
+					var feePaid int64
+					for _, part := range event.Get("parts").Array() {
+						feePaid += part.Get("feesPaid").Int()
+					}
+
+					for _, listener := range e.paymentStatusListeners {
+						listener <- rp.PaymentStatus{
+							CheckingID: event.Get("id").String(),
+							Status:     rp.Complete,
+							FeePaid:    feePaid,
+							Preimage:   event.Get("paymentPreimage").String(),
+						}
+					}
+				}
 			}
 		}()
 	}
@@ -134,6 +159,7 @@ func (e *EclairWallet) GetInvoiceStatus(checkingID string) (rp.InvoiceStatus, er
 
 func (e *EclairWallet) PaidInvoicesStream() (<-chan rp.InvoiceStatus, error) {
 	listener := make(chan rp.InvoiceStatus)
+	e.invoiceStatusListeners = append(e.invoiceStatusListeners, listener)
 	return listener, nil
 }
 
@@ -189,15 +215,15 @@ func (e *EclairWallet) GetPaymentStatus(checkingID string) (rp.PaymentStatus, er
 					CheckingID: checkingID,
 					Status:     rp.Pending,
 				}, nil
+			case "failed":
+				// this one failed, but keep checking the others
+				continue
 			default:
 				// what is this?
 				return rp.PaymentStatus{
 					CheckingID: checkingID,
 					Status:     rp.Unknown,
 				}, nil
-			case "failed":
-				// this one failed, but keep checking the others
-				continue
 			}
 		}
 
@@ -211,5 +237,6 @@ func (e *EclairWallet) GetPaymentStatus(checkingID string) (rp.PaymentStatus, er
 
 func (e *EclairWallet) PaymentsStream() (<-chan rp.PaymentStatus, error) {
 	listener := make(chan rp.PaymentStatus)
+	e.paymentStatusListeners = append(e.paymentStatusListeners, listener)
 	return listener, nil
 }
