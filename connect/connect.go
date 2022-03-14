@@ -7,6 +7,7 @@ import (
 
 	"github.com/kelseyhightower/envconfig"
 	"github.com/lnbits/relampago"
+	"github.com/lnbits/relampago/eclair"
 	"github.com/lnbits/relampago/lnd"
 	"github.com/lnbits/relampago/sparko"
 	"github.com/lnbits/relampago/void"
@@ -22,6 +23,9 @@ type LightningBackendSettings struct {
 	LNDHost         string `envconfig:"LND_HOST"`
 	LNDCertPath     string `envconfig:"LND_CERT_PATH"`
 	LNDMacaroonPath string `envconfig:"LND_MACAROON_PATH"`
+
+	EclairHost     string `envconfig:"ECLAIR_HOST"`
+	EclairPassword string `envconfig:"ECLAIR_PASSWORD"`
 }
 
 func Connect() (relampago.Wallet, error) {
@@ -39,7 +43,7 @@ func Connect() (relampago.Wallet, error) {
 	// start lightning backend
 	switch lbs.BackendType {
 	case "lndrest":
-	case "lndgrpc":
+	case "lnd", "lndgrpc":
 		return lnd.Start(lnd.Params{
 			Host:           lbs.LNDHost,
 			CertPath:       lbs.LNDCertPath,
@@ -47,6 +51,10 @@ func Connect() (relampago.Wallet, error) {
 			ConnectTimeout: time.Duration(connectTimeout) * time.Second,
 		})
 	case "eclair":
+		return eclair.Start(eclair.Params{
+			Host:     lbs.EclairHost,
+			Password: lbs.EclairPassword,
+		})
 	case "clightning":
 	case "sparko":
 		return sparko.Start(sparko.Params{
