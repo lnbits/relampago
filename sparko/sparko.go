@@ -142,7 +142,7 @@ func (s *SparkoWallet) CreateInvoice(params rp.InvoiceParams) (rp.InvoiceData, e
 	}
 
 	if params.Expiry != nil {
-		args["expiry"] = *params.Expiry / time.Second
+		args["expiry"] = params.Expiry.Seconds()
 	}
 
 	inv, err := s.client.Call(method, args)

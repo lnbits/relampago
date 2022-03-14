@@ -5,7 +5,6 @@ import (
 	"encoding/hex"
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/fiatjaf/eclair-go"
 	rp "github.com/lnbits/relampago"
@@ -119,7 +118,7 @@ func (e *EclairWallet) CreateInvoice(params rp.InvoiceParams) (rp.InvoiceData, e
 	}
 
 	if params.Expiry != nil {
-		args["expireIn"] = *params.Expiry / time.Second
+		args["expireIn"] = params.Expiry.Seconds()
 	}
 
 	inv, err := e.client.Call("createinvoice", args)
