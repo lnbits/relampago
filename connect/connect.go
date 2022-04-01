@@ -7,6 +7,7 @@ import (
 
 	"github.com/kelseyhightower/envconfig"
 	"github.com/lnbits/relampago"
+	"github.com/lnbits/relampago/cliche"
 	"github.com/lnbits/relampago/eclair"
 	"github.com/lnbits/relampago/lnd"
 	"github.com/lnbits/relampago/sparko"
@@ -26,6 +27,9 @@ type LightningBackendSettings struct {
 
 	EclairHost     string `envconfig:"ECLAIR_HOST"`
 	EclairPassword string `envconfig:"ECLAIR_PASSWORD"`
+
+	ClicheJARPath string `envconfig:"CLICHE_JAR_PATH"`
+	ClicheDataDir string `envconfig:"CLICHE_DATADIR"`
 }
 
 func Connect() (relampago.Wallet, error) {
@@ -61,6 +65,11 @@ func Connect() (relampago.Wallet, error) {
 			Host:           lbs.SparkoURL,
 			Key:            lbs.SparkoToken,
 			ConnectTimeout: time.Duration(connectTimeout) * time.Second,
+		})
+	case "cliche":
+		return cliche.Start(cliche.Params{
+			JARPath: lbs.ClicheJARPath,
+			DataDir: lbs.ClicheDataDir,
 		})
 	case "lnbits":
 	case "lnpay":
