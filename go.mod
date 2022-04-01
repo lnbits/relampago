@@ -6,13 +6,13 @@ require (
 	cloud.google.com/go v0.99.0 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/fiatjaf/eclair-go v0.2.3
+	github.com/fiatjaf/go-cliche v0.1.0
 	github.com/fiatjaf/lightningd-gjson-rpc v1.4.1
 	github.com/fiatjaf/ln-decodepay v1.1.0
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/kr/pretty v0.2.0 // indirect
 	github.com/lightningnetwork/lnd v0.14.1-beta
-	github.com/prometheus/common v0.26.0
 	github.com/r3labs/sse/v2 v2.3.6
 	github.com/tidwall/gjson v1.8.1
 	go.etcd.io/etcd/client/v2 v2.305.1 // indirect
