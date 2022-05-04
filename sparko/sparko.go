@@ -35,9 +35,9 @@ func Start(params Params) (*SparkoWallet, error) {
 	if !strings.HasPrefix(params.Host, "http") {
 		params.Host = "http://" + params.Host
 	}
-	if strings.HasSuffix(params.Host, "/rpc") {
-		params.Host = params.Host[0 : len(params.Host)-4]
-	}
+	
+	params.Host = strings.TrimSuffix(params.Host, "/")
+	params.Host = strings.TrimSuffix(params.Host, "/rpc")
 
 	spark := &lightning.Client{
 		SparkURL:    params.Host + "/rpc",
