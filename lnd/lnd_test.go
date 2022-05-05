@@ -6,9 +6,9 @@ import (
 	"testing"
 	"time"
 
-	rp "github.com/lnbits/relampago"
 	"github.com/lightningnetwork/lnd/lnrpc"
 	"github.com/lightningnetwork/lnd/lnrpc/routerrpc"
+	rp "github.com/lnbits/relampago"
 	"google.golang.org/grpc"
 )
 
@@ -105,6 +105,7 @@ func TestGetInvoiceStatus(t *testing.T) {
 		t.Errorf("got %v, wanted %v", got, want)
 	}
 }
+
 func TestGetInvoiceStatus_NotPaid(t *testing.T) {
 	lightning, _, lnd := setupMocks()
 	lightning.LookupInvoiceMock = func(_ *lnrpc.PaymentHash) (*lnrpc.Invoice, error) {
@@ -365,27 +366,32 @@ type MockRouterClient struct {
 }
 
 func (m *MockLightningClient) ChannelBalance(
-	_ context.Context, req *lnrpc.ChannelBalanceRequest, _ ...grpc.CallOption) (*lnrpc.ChannelBalanceResponse, error) {
+	_ context.Context, req *lnrpc.ChannelBalanceRequest, _ ...grpc.CallOption,
+) (*lnrpc.ChannelBalanceResponse, error) {
 	return m.ChannelBalanceMock(req)
 }
 
 func (m *MockLightningClient) AddInvoice(
-	_ context.Context, req *lnrpc.Invoice, _ ...grpc.CallOption) (*lnrpc.AddInvoiceResponse, error) {
+	_ context.Context, req *lnrpc.Invoice, _ ...grpc.CallOption,
+) (*lnrpc.AddInvoiceResponse, error) {
 	return m.AddInvoiceMock(req)
 }
 
 func (m *MockLightningClient) LookupInvoice(
-	_ context.Context, req *lnrpc.PaymentHash, _ ...grpc.CallOption) (*lnrpc.Invoice, error) {
+	_ context.Context, req *lnrpc.PaymentHash, _ ...grpc.CallOption,
+) (*lnrpc.Invoice, error) {
 	return m.LookupInvoiceMock(req)
 }
 
 func (m *MockLightningClient) ListPayments(
-	_ context.Context, req *lnrpc.ListPaymentsRequest, _ ...grpc.CallOption) (*lnrpc.ListPaymentsResponse, error) {
+	_ context.Context, req *lnrpc.ListPaymentsRequest, _ ...grpc.CallOption,
+) (*lnrpc.ListPaymentsResponse, error) {
 	return m.ListPaymentsMock(req)
 }
 
 func (m *MockLightningClient) SubscribeInvoices(
-	_ context.Context, req *lnrpc.InvoiceSubscription, _ ...grpc.CallOption) (lnrpc.Lightning_SubscribeInvoicesClient, error) {
+	_ context.Context, req *lnrpc.InvoiceSubscription, _ ...grpc.CallOption,
+) (lnrpc.Lightning_SubscribeInvoicesClient, error) {
 	client := InvoiceStreamMock{Data: make(chan *lnrpc.Invoice)}
 	data, err := m.SubscribeInvoicesMock(req)
 	if err != nil {
@@ -399,7 +405,8 @@ func (m *MockLightningClient) SubscribeInvoices(
 }
 
 func (m *MockRouterClient) SendPaymentV2(
-	_ context.Context, req *routerrpc.SendPaymentRequest, _ ...grpc.CallOption) (routerrpc.Router_SendPaymentV2Client, error) {
+	_ context.Context, req *routerrpc.SendPaymentRequest, _ ...grpc.CallOption,
+) (routerrpc.Router_SendPaymentV2Client, error) {
 	client := PaymentStreamMock{Data: make(chan *lnrpc.Payment)}
 	data, err := m.SendPaymentV2Mock(req)
 	if err != nil {
@@ -413,7 +420,8 @@ func (m *MockRouterClient) SendPaymentV2(
 }
 
 func (m *MockRouterClient) TrackPaymentV2(
-	_ context.Context, req *routerrpc.TrackPaymentRequest, _ ...grpc.CallOption) (routerrpc.Router_TrackPaymentV2Client, error) {
+	_ context.Context, req *routerrpc.TrackPaymentRequest, _ ...grpc.CallOption,
+) (routerrpc.Router_TrackPaymentV2Client, error) {
 	client := PaymentStreamMock{Data: make(chan *lnrpc.Payment)}
 	data, err := m.TrackPaymentV2Mock(req)
 	if err != nil {

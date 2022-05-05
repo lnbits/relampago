@@ -35,7 +35,7 @@ func Start(params Params) (*SparkoWallet, error) {
 	if !strings.HasPrefix(params.Host, "http") {
 		params.Host = "http://" + params.Host
 	}
-	
+
 	params.Host = strings.TrimSuffix(params.Host, "/")
 	params.Host = strings.TrimSuffix(params.Host, "/rpc")
 
