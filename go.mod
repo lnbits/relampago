@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	github.com/fiatjaf/eclair-go v0.2.3
-	github.com/fiatjaf/go-cliche v0.3.0
+	github.com/fiatjaf/go-cliche v0.3.1
 	github.com/fiatjaf/lightningd-gjson-rpc v1.6.0
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/lightningnetwork/lnd v0.15.0-beta
