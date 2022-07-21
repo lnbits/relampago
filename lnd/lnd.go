@@ -21,8 +21,6 @@ import (
 	macaroon "gopkg.in/macaroon.v2"
 )
 
-var PaymentPollInterval = 30 * time.Second
-
 type Params struct {
 	Host           string
 	CertPath       string
