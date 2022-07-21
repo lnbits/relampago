@@ -9,7 +9,7 @@ import (
 	"time"
 
 	lightning "github.com/fiatjaf/lightningd-gjson-rpc"
-	decodepay "github.com/fiatjaf/ln-decodepay"
+	decodepay "github.com/nbd-wtf/ln-decodepay"
 	rp "github.com/lnbits/relampago"
 	sse "github.com/r3labs/sse/v2"
 	"github.com/tidwall/gjson"

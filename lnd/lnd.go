@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	decodepay "github.com/fiatjaf/ln-decodepay"
+	decodepay "github.com/nbd-wtf/ln-decodepay"
 	"github.com/lightningnetwork/lnd/lnrpc"
 	"github.com/lightningnetwork/lnd/lnrpc/routerrpc"
 	"github.com/lightningnetwork/lnd/macaroons"
