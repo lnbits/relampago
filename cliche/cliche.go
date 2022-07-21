@@ -91,7 +91,7 @@ func (e *ClicheWallet) GetInfo() (rp.WalletInfo, error) {
 
 	var balance int64
 	for _, channel := range info.Channels {
-		balance += channel.Balance
+		balance += int64(channel.Balance)
 	}
 
 	return rp.WalletInfo{Balance: balance}, nil
