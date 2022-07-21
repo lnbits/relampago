@@ -6,7 +6,7 @@ require (
 	cloud.google.com/go v0.99.0 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/fiatjaf/eclair-go v0.2.3
-	github.com/fiatjaf/go-cliche v0.1.0
+	github.com/fiatjaf/go-cliche v0.3.0
 	github.com/fiatjaf/lightningd-gjson-rpc v1.4.1
 	github.com/fiatjaf/ln-decodepay v1.1.0
 	github.com/json-iterator/go v1.1.12 // indirect

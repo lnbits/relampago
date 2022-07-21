@@ -211,8 +211,8 @@ github.com/fergusstrange/embedded-postgres v1.10.0 h1:YnwF6xAQYmKLAXXrrRx4rHDLih
 github.com/fergusstrange/embedded-postgres v1.10.0/go.mod h1:a008U8/Rws5FtIOTGYDYa7beVWsT3qVKyqExqYYjL+c=
 github.com/fiatjaf/eclair-go v0.2.3 h1:hJLlIo0QWWIGaM/qwhs2XiyBordu/N+jqktWAond6uY=
 github.com/fiatjaf/eclair-go v0.2.3/go.mod h1:GVwvLpx9QwIcVnhJDn1r+LAS3B1jX++ARXahxpU6RZc=
-github.com/fiatjaf/go-cliche v0.1.0 h1:TizN38ScwF8Q5r5pBAVlNz8qMpWS07SmR/bqN2QNQZ4=
-github.com/fiatjaf/go-cliche v0.1.0/go.mod h1:egCdh5lxCWTzRkNFTnhgjuTGqQ90mPXi9j8X5FtkjkE=
+github.com/fiatjaf/go-cliche v0.3.0 h1:S271O6gm/jqXlBUfb3FpPo4hxPFTg1r12PyMKBA6EHg=
+github.com/fiatjaf/go-cliche v0.3.0/go.mod h1:egCdh5lxCWTzRkNFTnhgjuTGqQ90mPXi9j8X5FtkjkE=
 github.com/fiatjaf/go-lnurl v1.0.0/go.mod h1:BqA8WXAOzntF7Z3EkVO7DfP4y5rhWUmJ/Bu9KBke+rs=
 github.com/fiatjaf/lightningd-gjson-rpc v1.4.1 h1:J6TgNXO18Xc6udxj7/a6RhuusJR0lUiDlKJkJ/EdnNs=
 github.com/fiatjaf/lightningd-gjson-rpc v1.4.1/go.mod h1:SQGA0qcY2qypaMXDQlE5V5+2MnLZzQ7NzfRsScliFeE=

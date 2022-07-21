@@ -11,8 +11,9 @@ import (
 )
 
 type Params struct {
-	JARPath string
-	DataDir string
+	JARPath    string
+	BinaryPath string
+	DataDir    string
 }
 
 type ClicheWallet struct {
@@ -25,8 +26,9 @@ type ClicheWallet struct {
 func Start(params Params) (*ClicheWallet, error) {
 	e := &ClicheWallet{
 		control: &clichelib.Control{
-			JARPath: params.JARPath,
-			DataDir: params.DataDir,
+			JARPath:    params.JARPath,
+			BinaryPath: params.BinaryPath,
+			DataDir:    params.DataDir,
 		},
 	}
 
